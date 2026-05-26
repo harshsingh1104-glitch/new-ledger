@@ -27,15 +27,12 @@ const accountSchema = new mongoose.Schema({
 accountSchema.index({user:1, status:1})
 
 accountSchema.methods.getBalance = async function(){
-    const balanceData = await LedgerModel.aggregate([
-        {$match: {account: this._id}
-        },
-        {$group: {
-            _id: null,
-            balance: {$sum: {$cond: [{$eq: ["$type", "credit"]}, "$balance", {$multiply: ["$balance", -1]}]}
-            }
-        }}
+    const LedgerData = await LedgerModel.aggregate([
     ])
+     if(balanceData.length === 0){
+        return 0
+     }
+        return balance[0].balance
 }
 
 
