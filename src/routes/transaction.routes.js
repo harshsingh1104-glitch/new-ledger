@@ -1,4 +1,5 @@
 const {router} = require('express');
+const transactionController = require('../controllers/transaction.controller');
 const authMiddleWare = require('../middleware/auth.middleware');
 
 
@@ -10,7 +11,7 @@ const transactionRoutes = Router();
  * -create a new transaction
  */
 
-transactionRoutes.post("/",authMiddleWare.authMiddleWare)
+transactionRoutes.post("/",authMiddleWare.authMiddleWare,transactionController.createTransaction)
 
 
 

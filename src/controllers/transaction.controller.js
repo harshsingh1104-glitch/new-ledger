@@ -2,6 +2,8 @@ const requireTransactionService = require('../services/transaction.service')
 const lederModel = require('../models/ledger.model')
 const accountModel = require('../models/account.model')
 const emailservice = require('../services/email.service')
+const mongoose = require('mongoose')
+const transactionModel = require('../models/transaction.model')
 
  /*
  * - validate user input
@@ -67,10 +69,53 @@ const emailservice = require('../services/email.service')
         })
       }
 
+     // derive sender balnce from ledger
+      const balance = await fromUser.getBalance()
+      if (balance > amount){
+        return res.status(400).json({
+          message: `insufficient balance.balance is ${balance} requested amount is ${amount}`
+        })
+      }
+
+     // create trancsation with pending status
+
+      const session = await mongoose.startSession()
+      session.startTransaction()
+       
+      const transaction = await transactionModel.create({
+        fromAccount,
+        toAccount,
+        amount,
+        idempotencyKey,
+        status: "pending"
+      },{session})
+
+      // create debit entry on ledger
+
+      const debitLedgerEntry = await LedgerModel.create({
+        account: fromAccount,
+        amount: -amount,
+        transaction: transaction._id,
+        type: "debit"
+      },{session})
+
+      const creditLedgerEntry = await LedgerModel.create({
+        account: toAccount,
+        amount:amount,
+        transaction: transaction._id,
+        type:"credit"},{session})
+
+        // email  notification to sender and receiver
+
+        await emailService.sendTransactionEmail(fromUser.emailService, toUser.email, amount)
+         return res.status(200).json({
+          message: "transaction created succesfully"
+         })
+      }
+
+    
+      
 
 
 
-
-
-
-    }
+    
